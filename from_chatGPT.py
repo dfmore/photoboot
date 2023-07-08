@@ -1,6 +1,5 @@
 import cv2
-import win32print
-import win32con
+import subprocess
 from datetime import datetime
 
 # Set the desired video capture dimensions
@@ -29,40 +28,8 @@ def capture_image(frame):
 
 # Function to print an image
 def print_image(image_path):
-    # Get the default printer name
-    default_printer = win32print.GetDefaultPrinter()
-
-    # Open the printer
-    printer_handle = win32print.OpenPrinter(default_printer)
-
-    try:
-        # Get the printer properties
-        properties = win32print.GetPrinter(printer_handle, 2)
-
-        # Check if the printer supports RAW printing
-        if properties['pDevMode'].Specs[0] & win32con.DM_COPIES == 0:
-            raise ValueError("The printer does not support RAW printing.")
-
-        # Start the printing job
-        win32print.StartDocPrinter(printer_handle, 1, (image_path, None, "RAW"))
-
-        # Open the image file
-        file = open(image_path, "rb")
-        try:
-            # Send the image to the printer
-            win32print.StartPagePrinter(printer_handle)
-            win32print.WritePrinter(printer_handle, file.read())
-            win32print.EndPagePrinter(printer_handle)
-        finally:
-            # Close the image file
-            file.close()
-
-        # End the printing job
-        win32print.EndDocPrinter(printer_handle)
-
-    finally:
-        # Close the printer
-        win32print.ClosePrinter(printer_handle)
+    # Use the 'print' command-line utility in Windows to print the image
+    subprocess.run(['print', image_path], shell=True)
 
 # Main script
 def main():
