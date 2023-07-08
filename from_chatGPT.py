@@ -3,6 +3,8 @@ import win32print
 import win32con
 from datetime import datetime
 
+# delete
+
 # Set the desired video capture dimensions
 width = 1280
 height = 720
