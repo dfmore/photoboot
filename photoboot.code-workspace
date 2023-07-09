@@ -4,5 +4,7 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"azureAutomation.directory.basePath": "c:\\Users\\Daniel Moreira"
+	}
 }
