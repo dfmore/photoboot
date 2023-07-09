@@ -2,6 +2,7 @@ import cv2
 import win32print
 from datetime import datetime
 import time
+import numpy as np
 
 # Set the desired video capture dimensions
 width = 1920
@@ -18,7 +19,7 @@ def capture_image(frame):
     # Generate the filename with timestamp
     filename = f"captured_image_{timestamp}.jpg"
     
-    # Save the captured frame to the file
+    # Save the captured frame to the file without the countdown number
     cv2.imwrite(filename, frame)
 
     # Print the captured image
@@ -51,19 +52,29 @@ def draw_timer(frame, seconds):
 
     # Set the font properties
     font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 2
-    font_thickness = 5
+    font_scale = 4
+    font_thickness = 6
+    shadow_offset = 4
 
     # Calculate the text size
     text = str(seconds)
-    text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
+    (text_width, text_height), _ = cv2.getTextSize(text, font, font_scale, font_thickness)
 
     # Calculate the position to center the text
-    text_x = int((width - text_size[0]) / 2)
-    text_y = int((height + text_size[1]) / 2)
+    text_x = int((width - text_width) / 2)
+    text_y = int((height + text_height) / 2)
 
-    # Draw the countdown timer on the frame
-    cv2.putText(frame, text, (text_x, text_y), font, font_scale, (0, 0, 255), font_thickness, cv2.LINE_AA)
+    # Create a black drop shadow
+    shadow_img = np.zeros((height, width, 3), dtype=np.uint8)
+    cv2.putText(shadow_img, text, (text_x + shadow_offset, text_y + shadow_offset), font, font_scale, (0, 0, 0), font_thickness, cv2.LINE_AA)
+
+    # Create the white text
+    cv2.putText(frame, text, (text_x, text_y), font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
+
+    # Combine the shadow and frame images
+    frame = cv2.addWeighted(frame, 1, shadow_img, 0.7, 0)
+
+    return frame
 
 # Main script
 def main():
@@ -75,6 +86,7 @@ def main():
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     
     capturing = False  # Flag to indicate whether to capture image or not
+    countdown = 3  # Countdown duration
     
     while True:
         ret, frame = cap.read()
@@ -83,12 +95,14 @@ def main():
         frame = cv2.flip(frame, 1)
         
         if capturing:
-            # Draw the countdown timer
-            draw_timer(frame, countdown)
-            cv2.imshow("Webcam", frame)
-            cv2.waitKey(1000)
-            countdown -= 1
-            if countdown == 0:
+            if countdown > 0:
+                # Draw the countdown timer
+                frame = draw_timer(frame, countdown)
+                cv2.imshow("Webcam", frame)
+                cv2.waitKey(1000)
+                countdown -= 1
+            else:
+                # Capture the image after countdown reaches 0
                 capture_image(frame)
                 capturing = False
                 countdown = 3
@@ -102,7 +116,6 @@ def main():
         
         if key == ord("c"):  # Check for "c" key press to initiate countdown
             capturing = True
-            countdown = 3
     
     cap.release()
     cv2.destroyAllWindows()
