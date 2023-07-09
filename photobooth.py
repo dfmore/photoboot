@@ -1,5 +1,6 @@
 import cv2
 import ctypes
+import os
 from datetime import datetime
 import numpy as np
 
@@ -92,7 +93,11 @@ def main():
                 # Prompt user if they want to print the captured image
                 print_prompt = prompt_dialog_box("Print Confirmation", "Do you want to print the captured image?")
                 if print_prompt:
-                    print("Image captured successfully:", image_path)
+                    try:
+                        os.startfile(image_path, "print")
+                        print("Printing the captured image:", image_path)
+                    except Exception as e:
+                        print("Failed to print the image:", str(e))
                 else:
                     print("Image capture cancelled.")
 
