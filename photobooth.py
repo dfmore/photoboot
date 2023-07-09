@@ -1,6 +1,7 @@
 import cv2
 import win32print
 from datetime import datetime
+import time
 
 # Set the desired video capture dimensions
 width = 1920
@@ -43,6 +44,27 @@ def print_image(image_path):
     # Close the image file
     file.close()
 
+# Function to draw the countdown timer on the frame
+def draw_timer(frame, seconds):
+    # Get the dimensions of the frame
+    height, width, _ = frame.shape
+
+    # Set the font properties
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 2
+    font_thickness = 5
+
+    # Calculate the text size
+    text = str(seconds)
+    text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
+
+    # Calculate the position to center the text
+    text_x = int((width - text_size[0]) / 2)
+    text_y = int((height + text_size[1]) / 2)
+
+    # Draw the countdown timer on the frame
+    cv2.putText(frame, text, (text_x, text_y), font, font_scale, (0, 0, 255), font_thickness, cv2.LINE_AA)
+
 # Main script
 def main():
     # Display the webcam feed
@@ -60,18 +82,27 @@ def main():
         # Mirror the image horizontally
         frame = cv2.flip(frame, 1)
         
-        cv2.imshow("Webcam", frame)
+        if capturing:
+            # Draw the countdown timer
+            draw_timer(frame, countdown)
+            cv2.imshow("Webcam", frame)
+            cv2.waitKey(1000)
+            countdown -= 1
+            if countdown == 0:
+                capture_image(frame)
+                capturing = False
+                countdown = 3
+        else:
+            cv2.imshow("Webcam", frame)
+
         key = cv2.waitKey(1)
         
         if key == 27:  # Check for Escape key press
             break
         
-        if key == ord("c"):  # Check for "c" key press to capture image
+        if key == ord("c"):  # Check for "c" key press to initiate countdown
             capturing = True
-        
-        if capturing:
-            capture_image(frame)
-            capturing = False
+            countdown = 3
     
     cap.release()
     cv2.destroyAllWindows()
