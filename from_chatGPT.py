@@ -5,13 +5,27 @@ from datetime import datetime
 import numpy as np
 from pathlib import Path
 from threading import Thread
-import cv2, time
+import time
+import pygetwindow as gw
 
 
 class VideoStreamWidget(object):
-    def __init__(self, src=0):
+    def __init__(self, src=1, width=1920, height=1080):
+        print("Start capturing...")
         self.capture = cv2.VideoCapture(src)
+        print("Set width " + str(width) + "...")
+        setwidth = self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        print("Width set = " + str(setwidth))
+        print("Set height " + str(height))
+        setheight = self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        print("Height set = " + str(setheight))
         self.status, self.frame = self.capture.read()
+        self.aspect_ratio = width / height  # Calculate the aspect ratio
+        self.window_name = 'frame'  # Name of the display window
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)  # Create a resizable window
+        self.set_resizable_aspect_ratio(width, height)  # Set the aspect ratio for the window
+        cv2.imshow(self.window_name, self.frame)  # Display the initial frame
+
         # Start the thread to read frames from the video stream
         self.thread = Thread(target=self.update, args=())
         self.thread.daemon = True
@@ -26,12 +40,39 @@ class VideoStreamWidget(object):
 
     def show_frame(self):
         # Display frames in the main program
-        cv2.imshow('frame', self.frame)
+        cv2.imshow(self.window_name, self.frame)
         key = cv2.waitKey(1)
         if key == ord('q'):
             self.capture.release()
             cv2.destroyAllWindows()
             exit(1)
+
+    def set_resizable_aspect_ratio(self, width, height):
+        screen_width = ctypes.windll.user32.GetSystemMetrics(0)  # Get the screen width
+        screen_height = ctypes.windll.user32.GetSystemMetrics(1)  # Get the screen height
+
+        # Calculate the maximum width and height based on the screen size and aspect ratio
+        max_width = min(screen_width, int(screen_height * self.aspect_ratio))
+        max_height = min(screen_height, int(screen_width / self.aspect_ratio))
+
+        # Scale the width and height if they exceed the maximum values
+        if width > max_width:
+            width = max_width
+            height = int(width / self.aspect_ratio)
+        if height > max_height:
+            height = max_height
+            width = int(height * self.aspect_ratio)
+
+        # Calculate the window position to center it on the screen
+        x_pos = int((screen_width - width) / 2)
+        y_pos = int((screen_height - height) / 2)
+
+        # Set the window position and size using PyGetWindow
+        window = gw.getWindowsWithTitle(self.window_name)[0]
+        window.left = x_pos
+        window.top = y_pos
+        window.width = width
+        window.height = height
 
 
 # Set the desired video capture dimensions
@@ -42,9 +83,10 @@ height = 1080
 def capture_image(frame):
     # Mirror the image horizontally
     frame = cv2.flip(frame, 1)
+    frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
     # Get the current timestamp
-    timestamp = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H%M")
 
     # Generate the filename with timestamp
     filename = f"captured_image_{timestamp}.jpg"
@@ -81,7 +123,8 @@ def draw_timer(frame, seconds):
 
     # Create a black drop shadow
     shadow_img = np.zeros((height, width, 3), dtype=np.uint8)
-    cv2.putText(shadow_img, text, (text_x + shadow_offset, text_y + shadow_offset), font, font_scale, (0, 0, 0), font_thickness, cv2.LINE_AA)
+    cv2.putText(shadow_img, text, (text_x + shadow_offset, text_y + shadow_offset), font, font_scale, (0, 0, 0),
+                font_thickness, cv2.LINE_AA)
 
     # Create the black outline
     cv2.putText(frame, text, (text_x - 3, text_y), font, font_scale, (0, 0, 0), font_thickness + 6, cv2.LINE_AA)
@@ -106,14 +149,10 @@ def prompt_dialog_box(title, message):
 # Main script
 def main():
     # Display the webcam feed
-    video_stream_widget = VideoStreamWidget()
+    video_stream_widget = VideoStreamWidget(width=1900, height=1080)
     
     # Wait for a moment to ensure the webcam feed is started
     time.sleep(2)
-
-    # Set the video capture dimensions
-    # video_stream_widget.capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-    # video_stream_widget.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
     capturing = False  # Flag to indicate whether to capture image or not
     countdown = 3  # Countdown duration
@@ -121,8 +160,9 @@ def main():
     while True:
         frame = video_stream_widget.frame
 
-        # Mirror the image horizontally
+        # Mirror the image horizontally and rotate
         frame = cv2.flip(frame, 1)
+        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
         if capturing:
             if countdown > 0:

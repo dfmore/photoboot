@@ -5,12 +5,19 @@ from datetime import datetime
 import numpy as np
 from pathlib import Path
 from threading import Thread
-import cv2, time
+import time
 
 
 class VideoStreamWidget(object):
-    def __init__(self, src=0):
+    def __init__(self, src=0, width=1920, height=1080):
+        print("Start capturing...")
         self.capture = cv2.VideoCapture(src)
+        print("Set width " + str(width) + "...")
+        setwidth = self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        print("Width set = " + str(setwidth))
+        print("Set height " + str(height))
+        setheight = self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        print("Height set = " + str(setheight))
         self.status, self.frame = self.capture.read()
         # Start the thread to read frames from the video stream
         self.thread = Thread(target=self.update, args=())
@@ -44,7 +51,7 @@ def capture_image(frame):
     frame = cv2.flip(frame, 1)
 
     # Get the current timestamp
-    timestamp = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H%M")
 
     # Generate the filename with timestamp
     filename = f"captured_image_{timestamp}.jpg"
@@ -106,14 +113,10 @@ def prompt_dialog_box(title, message):
 # Main script
 def main():
     # Display the webcam feed
-    video_stream_widget = VideoStreamWidget()
+    video_stream_widget = VideoStreamWidget(width=1900, height=1080)
     
     # Wait for a moment to ensure the webcam feed is started
     time.sleep(2)
-
-    # Set the video capture dimensions
-    # video_stream_widget.capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-    # video_stream_widget.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
     capturing = False  # Flag to indicate whether to capture image or not
     countdown = 3  # Countdown duration
@@ -121,7 +124,7 @@ def main():
     while True:
         frame = video_stream_widget.frame
 
-        # Mirror the image horizontally
+        # Mirror the image horizontally and rotate
         frame = cv2.flip(frame, 1)
 
         if capturing:
