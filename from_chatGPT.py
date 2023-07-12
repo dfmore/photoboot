@@ -35,9 +35,8 @@ class VideoStreamWidget(object):
 
 
 # Set the desired video capture dimensions
-width = 2304
-height = 1296
-
+width = 1920
+height = 1080
 
 # Function to capture and save an image
 def capture_image(frame):
@@ -108,11 +107,13 @@ def prompt_dialog_box(title, message):
 def main():
     # Display the webcam feed
     video_stream_widget = VideoStreamWidget()
-    while True:
-        try:
-            video_stream_widget.show_frame()
-        except AttributeError:
-            pass
+    
+    # Wait for a moment to ensure the webcam feed is started
+    time.sleep(2)
+
+    # Set the video capture dimensions
+    # video_stream_widget.capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    # video_stream_widget.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
     capturing = False  # Flag to indicate whether to capture image or not
     countdown = 3  # Countdown duration
@@ -131,7 +132,7 @@ def main():
                 cv2.waitKey(1000)
                 countdown -= 1
             else:
-                # Capture the image after countdown reaches 0
+                # Capture the image after the countdown reaches 0
                 image_path = capture_image(frame)
                 cv2.imshow("Captured Image", frame)
 
