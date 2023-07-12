@@ -4,114 +4,40 @@ import os
 from datetime import datetime
 import numpy as np
 from pathlib import Path
-import win32com.client
-import tkinter as tk
-from tkinter import ttk
+from threading import Thread
+import cv2, time
 
-# Function to get available cameras
-def get_cameras():
-    camera_indices = []
-    for index in range(10):  # Just a large number in case you have many cameras connected
-        cap = cv2.VideoCapture(index)
-        if cap.isOpened():
-            camera_indices.append(index)
-            cap.release()
-    return camera_indices
 
-    # Create a WMI object
-    wmi = win32com.client.GetObject ("winmgmts:")
+class VideoStreamWidget(object):
+    def __init__(self, src=0):
+        self.capture = cv2.VideoCapture(src)
+        self.status, self.frame = self.capture.read()
+        # Start the thread to read frames from the video stream
+        self.thread = Thread(target=self.update, args=())
+        self.thread.daemon = True
+        self.thread.start()
 
-    # Get a list of all cameras using WMI
-    cameras = wmi.InstancesOf ("Win32_PnPEntity")
-    
-    camera_names = []
-    camera_ids = []
+    def update(self):
+        # Read the next frame from the stream in a different thread
+        while True:
+            if self.capture.isOpened():
+                (self.status, self.frame) = self.capture.read()
+            time.sleep(.01)
 
-    # Iterate through all cameras
-    for camera in cameras:
-        # Check if the device is a camera
-        if "webcam" in camera.Name.lower() or "camera" in camera.Name.lower():
-            # Add the camera name and ID to the respective lists
-            camera_names.append(camera.Name)
-            camera_ids.append(int(camera.DeviceID.replace('Video', '')))
+    def show_frame(self):
+        # Display frames in the main program
+        cv2.imshow('frame', self.frame)
+        key = cv2.waitKey(1)
+        if key == ord('q'):
+            self.capture.release()
+            cv2.destroyAllWindows()
+            exit(1)
 
-    return camera_ids, camera_names
 
-# Function to prompt user to select camera
-def prompt_camera_selection(camera_indices):
-    # Create a root window
-    root = tk.Tk()
-    root.title("Camera Selection")
+# Set the desired video capture dimensions
+width = 2304
+height = 1296
 
-    # Create a variable to store the selected index
-    selected_index = tk.StringVar()
-
-    # Create a Combobox with the list of available camera indices
-    combo = ttk.Combobox(root, textvariable=selected_index)
-    combo['values'] = camera_indices
-    if camera_indices:
-        combo.current(0)  # Set the first camera as default
-    combo.pack(pady=20)
-
-    # Function to call when the confirm button is clicked
-    def confirm():
-        # Check if the selected index is valid
-        try:
-            index = int(selected_index.get())
-            if index not in camera_indices:
-                print("Invalid camera selected. Please select again.")
-            else:
-                root.quit()
-        except ValueError:
-            print("Invalid camera selected. Please select again.")
-
-    # Create a confirm button
-    btn = tk.Button(root, text="Confirm", command=confirm)
-    btn.pack()
-
-    # Run the GUI loop
-    root.mainloop()
-    root.destroy()
-
-    # Return the selected camera index
-    try:
-        return int(selected_index.get())
-    except ValueError:
-        return None
-    # Create a hidden root window
-    root = tk.Tk()
-    root.withdraw()
-
-    # Generate a string of available camera indices
-    camera_str = ', '.join(str(idx) for idx in camera_indices)
-
-    # Show a dialog asking the user to select a camera
-    dialog = simpledialog.askstring("Camera Selection", f"Select Camera ({camera_str}):")
-
-    try:
-        selected_index = int(dialog)
-        if selected_index not in camera_indices:
-            print(f"Invalid camera selected. Available cameras are: {camera_str}")
-            return None
-        return selected_index
-    except (ValueError, TypeError):
-        print(f"Invalid input. Available cameras are: {camera_str}")
-        return None
-
-    # Create a hidden root window
-    root = tk.Tk()
-    root.withdraw()
-
-    # Show a dialog asking the user to select a camera
-    dialog = simpledialog.askstring("Camera Selection", "Select Camera:", initialvalue=camera_names[0])
-
-    # Check if the user-selected camera is valid
-    if dialog not in camera_names:
-        print(f"Invalid camera selected. Available cameras are: {camera_names}")
-        return None
-
-    # Return the index of the selected camera
-    return camera_names.index(dialog)
 
 # Function to capture and save an image
 def capture_image(frame):
@@ -129,7 +55,7 @@ def capture_image(frame):
     folder_path = Path.home() / "Desktop" / folder_name
     folder_path.mkdir(parents=True, exist_ok=True)
 
-    # Save the captured frame to the file
+    # Save the captured frame to the file without the countdown number
     file_path = folder_path / filename
     cv2.imwrite(str(file_path), frame)
 
@@ -180,30 +106,19 @@ def prompt_dialog_box(title, message):
 
 # Main script
 def main():
-    # Get available cameras
-    camera_indices = get_cameras()
-
-    # Prompt user to select camera
-    selected_camera_index = prompt_camera_selection(camera_indices)
-    if selected_camera_index is None:
-        return
-
-    # Set the desired video capture dimensions
-    width = 1920
-    height = 1080
-
     # Display the webcam feed
-    cap = cv2.VideoCapture(selected_camera_index)
-
-    # Set the video capture dimensions
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    video_stream_widget = VideoStreamWidget()
+    while True:
+        try:
+            video_stream_widget.show_frame()
+        except AttributeError:
+            pass
 
     capturing = False  # Flag to indicate whether to capture image or not
     countdown = 3  # Countdown duration
 
     while True:
-        ret, frame = cap.read()
+        frame = video_stream_widget.frame
 
         # Mirror the image horizontally
         frame = cv2.flip(frame, 1)
@@ -230,6 +145,8 @@ def main():
                         print("Failed to print the image:", str(e))
                 else:
                     print("Image capture cancelled.")
+
+                # Go back to displaying the webcam feed
                 cv2.destroyWindow("Captured Image")
                 capturing = False
                 countdown = 3
@@ -237,12 +154,14 @@ def main():
             cv2.imshow("Webcam", frame)
 
         key = cv2.waitKey(1)
-        if key == 27:  # Escape key
+
+        if key == 27:  # Check for Escape key press
             break
-        if key == ord("c"):  # "c" key
+
+        if key == ord("c"):  # Check for "c" key press to initiate countdown
             capturing = True
 
-    cap.release()
+    video_stream_widget.capture.release()
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
