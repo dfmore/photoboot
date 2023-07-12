@@ -6,7 +6,14 @@ import numpy as np
 from pathlib import Path
 from threading import Thread
 import time
+import pygame
 
+# Initialize pygame audio mixer
+pygame.mixer.init()
+
+# Load the sound file
+sound_file = 'C:/Users/Daniel Moreira/Documents/GitHub/photoboot/camera-13695.wav'
+sound = pygame.mixer.Sound(sound_file)
 
 class VideoStreamWidget(object):
     def __init__(self, src=0, width=1920, height=1080):
@@ -135,6 +142,9 @@ def main():
                 cv2.waitKey(1000)
                 countdown -= 1
             else:
+                # Play the sound when the countdown reaches 0
+                sound.play()
+
                 # Capture the image after the countdown reaches 0
                 image_path = capture_image(frame)
                 cv2.imshow("Captured Image", frame)
