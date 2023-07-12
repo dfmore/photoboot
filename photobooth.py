@@ -4,40 +4,10 @@ import os
 from datetime import datetime
 import numpy as np
 from pathlib import Path
-from threading import Thread
-import cv2, time
-
-
-class VideoStreamWidget(object):
-    def __init__(self, src=0):
-        self.capture = cv2.VideoCapture(src)
-        self.status, self.frame = self.capture.read()
-        # Start the thread to read frames from the video stream
-        self.thread = Thread(target=self.update, args=())
-        self.thread.daemon = True
-        self.thread.start()
-
-    def update(self):
-        # Read the next frame from the stream in a different thread
-        while True:
-            if self.capture.isOpened():
-                (self.status, self.frame) = self.capture.read()
-            time.sleep(.01)
-
-    def show_frame(self):
-        # Display frames in the main program
-        cv2.imshow('frame', self.frame)
-        key = cv2.waitKey(1)
-        if key == ord('q'):
-            self.capture.release()
-            cv2.destroyAllWindows()
-            exit(1)
-
 
 # Set the desired video capture dimensions
-width = 2304
-height = 1296
-
+width = 1920
+height = 1080
 
 # Function to capture and save an image
 def capture_image(frame):
@@ -107,18 +77,19 @@ def prompt_dialog_box(title, message):
 # Main script
 def main():
     # Display the webcam feed
-    video_stream_widget = VideoStreamWidget()
-    while True:
-        try:
-            video_stream_widget.show_frame()
-        except AttributeError:
-            pass
+    cap = cv2.VideoCapture(0)
+
+    # Set the video capture dimensions
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    cap.set(cv2.CAP_PROP_FPS, 30)
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 
     capturing = False  # Flag to indicate whether to capture image or not
     countdown = 3  # Countdown duration
 
     while True:
-        frame = video_stream_widget.frame
+        ret, frame = cap.read()
 
         # Mirror the image horizontally
         frame = cv2.flip(frame, 1)
@@ -161,7 +132,7 @@ def main():
         if key == ord("c"):  # Check for "c" key press to initiate countdown
             capturing = True
 
-    video_stream_widget.capture.release()
+    cap.release()
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
