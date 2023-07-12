@@ -63,16 +63,17 @@ def capture_image(frame):
     # Generate the filename with timestamp
     filename = f"captured_image_{timestamp}.jpg"
 
-    # Create the folder on the user's desktop
-    folder_name = f"PhotoBooth-{datetime.now().strftime('%Y-%m-%d')}"
-    folder_path = Path.home() / "Desktop" / folder_name
-    folder_path.mkdir(parents=True, exist_ok=True)
+    # Set the folder path
+    folder_path = 'G:/My Drive/Memories/[2023] Arthur & Charlie 4yo bday'
+
+    # Create the folder if it doesn't exist
+    os.makedirs(folder_path, exist_ok=True)
 
     # Save the captured frame to the file without the countdown number
-    file_path = folder_path / filename
-    cv2.imwrite(str(file_path), frame)
+    file_path = os.path.join(folder_path, filename)
+    cv2.imwrite(file_path, frame)
 
-    return str(file_path)
+    return file_path
 
 # Function to draw the countdown timer on the frame
 def draw_timer(frame, seconds):
