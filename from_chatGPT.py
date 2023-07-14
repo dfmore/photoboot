@@ -52,7 +52,7 @@ class VideoStreamWidget(object):
 width = 1920
 height = 1080
 
-# Function to capture and save an image
+# Function to capture and save an image with birthday card frame
 def capture_image(frame):
     # Mirror the image horizontally
     frame = cv2.flip(frame, 1)
@@ -72,6 +72,93 @@ def capture_image(frame):
     # Save the captured frame to the file without the countdown number
     file_path = os.path.join(folder_path, filename)
     cv2.imwrite(file_path, frame)
+
+    # Load the birthday card frame image
+    card_frame_path = 'C:/Users/Daniel Moreira/Documents/GitHub/photoboot/frame.png'  # Replace with the actual path to the birthday card frame image
+    card_frame = cv2.imread(card_frame_path)
+
+    if card_frame is not None:
+        # Resize the card frame to match the captured image size
+        card_frame = cv2.resize(card_frame, (frame.shape[1], frame.shape[0]))
+
+        # Overlay the card frame on the captured image
+        blended_image = cv2.addWeighted(frame, 1, card_frame, 0.5, 0)
+
+        # Add text overlay
+        text = "Arthur & Charlie Birthday Party 2023"
+        font = cv2.FONT_HERSHEY_SCRIPT_SIMPLEX  # Change the font to FONT_HERSHEY_SCRIPT_SIMPLEX
+        font_scale = 3
+        font_thickness = 5
+        text_color = (255, 255, 255)
+        outline_color = (0, 0, 0)  # Black outline color
+
+        # Calculate the text size
+        (text_width, text_height), _ = cv2.getTextSize(text, font, font_scale, font_thickness)
+
+        # Calculate the position to center the text
+        text_x = int((frame.shape[1] - text_width) / 2)
+        text_y = int(frame.shape[0] / 2) + 450
+
+        # Draw the black outline
+        thickness = font_thickness + 2  # Increase the thickness for the outline
+        cv2.putText(
+            blended_image,
+            text,
+            (text_x - 3, text_y),
+            font,
+            font_scale,
+            outline_color,
+            thickness,
+            cv2.LINE_AA
+        )
+        cv2.putText(
+            blended_image,
+            text,
+            (text_x + 3, text_y),
+            font,
+            font_scale,
+            outline_color,
+            thickness,
+            cv2.LINE_AA
+        )
+        cv2.putText(
+            blended_image,
+            text,
+            (text_x, text_y - 3),
+            font,
+            font_scale,
+            outline_color,
+            thickness,
+            cv2.LINE_AA
+        )
+        cv2.putText(
+            blended_image,
+            text,
+            (text_x, text_y + 3),
+            font,
+            font_scale,
+            outline_color,
+            thickness,
+            cv2.LINE_AA
+        )
+
+        # Draw the white text
+        cv2.putText(
+            blended_image,
+            text,
+            (text_x, text_y),
+            font,
+            font_scale,
+            text_color,
+            font_thickness,
+            cv2.LINE_AA
+        )
+
+        # Save the final captured image with the birthday card frame
+        final_file_path = os.path.join(folder_path, f"final_{filename}")
+        cv2.imwrite(final_file_path, blended_image)
+
+        return final_file_path
 
     return file_path
 
