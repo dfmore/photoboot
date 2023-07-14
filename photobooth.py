@@ -16,7 +16,7 @@ sound_file = 'C:/Users/Daniel Moreira/Documents/GitHub/photoboot/camera-13695.wa
 sound = pygame.mixer.Sound(sound_file)
 
 class VideoStreamWidget(object):
-    def __init__(self, src=1, width=1920, height=1080):
+    def __init__(self, src=0, width=1920, height=1080):
         print("Start capturing...")
         self.capture = cv2.VideoCapture(src)
         print("Set width " + str(width) + "...")
@@ -86,15 +86,67 @@ def capture_image(frame):
 
         # Add text overlay
         text = "Arthur & Charlie Birthday Party 2023"
-        text_position = (int(frame.shape[1] / 2) - 400, int(frame.shape[0] / 2) + 350)
-        font = cv2.FONT_HERSHEY_SCRIPT_SIMPLEX
+        font = cv2.FONT_HERSHEY_SCRIPT_SIMPLEX  # Change the font to FONT_HERSHEY_SCRIPT_SIMPLEX
         font_scale = 3
         font_thickness = 5
         text_color = (255, 255, 255)
+        outline_color = (0, 0, 0)  # Black outline color
+
+        # Calculate the text size
+        (text_width, text_height), _ = cv2.getTextSize(text, font, font_scale, font_thickness)
+
+        # Calculate the position to center the text
+        text_x = int((frame.shape[1] - text_width) / 2)
+        text_y = int(frame.shape[0] / 2) + 450
+
+        # Draw the black outline
+        thickness = font_thickness + 2  # Increase the thickness for the outline
         cv2.putText(
             blended_image,
             text,
-            text_position,
+            (text_x - 3, text_y),
+            font,
+            font_scale,
+            outline_color,
+            thickness,
+            cv2.LINE_AA
+        )
+        cv2.putText(
+            blended_image,
+            text,
+            (text_x + 3, text_y),
+            font,
+            font_scale,
+            outline_color,
+            thickness,
+            cv2.LINE_AA
+        )
+        cv2.putText(
+            blended_image,
+            text,
+            (text_x, text_y - 3),
+            font,
+            font_scale,
+            outline_color,
+            thickness,
+            cv2.LINE_AA
+        )
+        cv2.putText(
+            blended_image,
+            text,
+            (text_x, text_y + 3),
+            font,
+            font_scale,
+            outline_color,
+            thickness,
+            cv2.LINE_AA
+        )
+
+        # Draw the white text
+        cv2.putText(
+            blended_image,
+            text,
+            (text_x, text_y),
             font,
             font_scale,
             text_color,
