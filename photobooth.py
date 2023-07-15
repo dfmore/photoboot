@@ -52,6 +52,16 @@ class VideoStreamWidget(object):
 width = 1920
 height = 1080
 
+def logo():
+    return ('''
+██████╗  █████╗ ███╗   ██╗███████╗        ██████╗ ██╗  ██╗ ██████╗ ████████╗ ██████╗ ██████╗  ██████╗  ██████╗ ████████╗██╗  ██╗
+██╔══██╗██╔══██╗████╗  ██║██╔════╝        ██╔══██╗██║  ██║██╔═══██╗╚══██╔══╝██╔═══██╗██╔══██╗██╔═══██╗██╔═══██╗╚══██╔══╝██║  ██║
+██║  ██║███████║██╔██╗ ██║███████╗        ██████╔╝███████║██║   ██║   ██║   ██║   ██║██████╔╝██║   ██║██║   ██║   ██║   ███████║
+██║  ██║██╔══██║██║╚██╗██║╚════██║        ██╔═══╝ ██╔══██║██║   ██║   ██║   ██║   ██║██╔══██╗██║   ██║██║   ██║   ██║   ██╔══██║
+██████╔╝██║  ██║██║ ╚████║███████║        ██║     ██║  ██║╚██████╔╝   ██║   ╚██████╔╝██████╔╝╚██████╔╝╚██████╔╝   ██║   ██║  ██║
+╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝        ╚═╝     ╚═╝  ╚═╝ ╚═════╝    ╚═╝    ╚═════╝ ╚═════╝  ╚═════╝  ╚═════╝    ╚═╝   ╚═╝  ╚═╝
+''')
+
 # Function to capture and save an image with birthday card frame
 def capture_image(frame):
     # Mirror the image horizontally
@@ -208,11 +218,8 @@ def prompt_dialog_box(title, message):
 # Main script
 def main():
     # Display the webcam feed
+    print(logo())
     video_stream_widget = VideoStreamWidget(width=1900, height=1080)
-    
-    # Wait for a moment to ensure the webcam feed is started
-    time.sleep(2)
-
     capturing = False  # Flag to indicate whether to capture image or not
     countdown = 3  # Countdown duration
 

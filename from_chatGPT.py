@@ -52,6 +52,16 @@ class VideoStreamWidget(object):
 width = 1920
 height = 1080
 
+def logo():
+    return ('''
+██████╗  █████╗ ███╗   ██╗███████╗        ██████╗ ██╗  ██╗ ██████╗ ████████╗ ██████╗ ██████╗  ██████╗  ██████╗ ████████╗██╗  ██╗
+██╔══██╗██╔══██╗████╗  ██║██╔════╝        ██╔══██╗██║  ██║██╔═══██╗╚══██╔══╝██╔═══██╗██╔══██╗██╔═══██╗██╔═══██╗╚══██╔══╝██║  ██║
+██║  ██║███████║██╔██╗ ██║███████╗        ██████╔╝███████║██║   ██║   ██║   ██║   ██║██████╔╝██║   ██║██║   ██║   ██║   ███████║
+██║  ██║██╔══██║██║╚██╗██║╚════██║        ██╔═══╝ ██╔══██║██║   ██║   ██║   ██║   ██║██╔══██╗██║   ██║██║   ██║   ██║   ██╔══██║
+██████╔╝██║  ██║██║ ╚████║███████║        ██║     ██║  ██║╚██████╔╝   ██║   ╚██████╔╝██████╔╝╚██████╔╝╚██████╔╝   ██║   ██║  ██║
+╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝        ╚═╝     ╚═╝  ╚═╝ ╚═════╝    ╚═╝    ╚═════╝ ╚═════╝  ╚═════╝  ╚═════╝    ╚═╝   ╚═╝  ╚═╝
+''')
+
 # Function to capture and save an image with birthday card frame
 def capture_image(frame):
     # Mirror the image horizontally
@@ -162,11 +172,6 @@ def capture_image(frame):
 
     return file_path
 
-# Function to get user input from console
-def get_user_input(prompt):
-    response = input(prompt)
-    return response.lower() == 'y'
-
 # Function to draw the countdown timer on the frame
 def draw_timer(frame, seconds):
     # Get the dimensions of the frame
@@ -205,9 +210,15 @@ def draw_timer(frame, seconds):
 
     return frame
 
+# Function to get user input from console
+def get_user_input(prompt):
+    response = input(prompt)
+    return response.lower() == 'y'
+
 # Main script
 def main():
     # Display the webcam feed
+    print(logo())
     video_stream_widget = VideoStreamWidget(width=1900, height=1080)
     capturing = False  # Flag to indicate whether to capture image or not
     countdown = 3  # Countdown duration
@@ -228,19 +239,19 @@ def main():
             else:
                 # Play the sound when the countdown reaches 0
                 sound.play()
-y
+
                 # Capture the image after the countdown reaches 0
                 image_path = capture_image(frame)
-                cv2.imshow("Captured Image", frame)
+
+                # Show the captured image on the screen
+                captured_image = cv2.imread(image_path)
+                cv2.imshow("Captured Image", captured_image)
 
                 # Prompt user if they want to print the captured image
                 print_prompt = get_user_input("Do you want to print the captured image? (y/n) ")
                 if print_prompt:
                     try:
-                        if sys.platform == 'win32':
-                            subprocess.run(['mspaint', '/p', image_path], check=True)
-                        else:
-                            subprocess.run(['lp', image_path], check=True)
+                        os.startfile(image_path, "print")
                         print("Printing the captured image:", image_path)
                     except Exception as e:
                         print("Failed to print the image:", str(e))
