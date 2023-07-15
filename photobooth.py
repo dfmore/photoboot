@@ -1,12 +1,11 @@
 import cv2
-import ctypes
 import os
 from datetime import datetime
 import numpy as np
-from pathlib import Path
 from threading import Thread
 import time
 import pygame
+import pygame_gui
 
 # Initialize pygame audio mixer
 pygame.mixer.init()
@@ -46,7 +45,6 @@ class VideoStreamWidget(object):
             self.capture.release()
             cv2.destroyAllWindows()
             exit(1)
-
 
 # Set the desired video capture dimensions
 width = 1920
@@ -210,20 +208,62 @@ def draw_timer(frame, seconds):
 
     return frame
 
-# Function to display a dialog box and ask for user input
-def prompt_dialog_box(title, message):
-    response = ctypes.windll.user32.MessageBoxW(0, message, title, 1)
-    return response == 1  # Return True if "Yes" button is clicked
-
 # Main script
 def main():
+    # Initialize Pygame
+    pygame.init()
+    clock = pygame.time.Clock()
+
+    # Set the dimensions of the Pygame window
+    window_width = 800
+    window_height = 600
+    window_surface = pygame.display.set_mode((window_width, window_height))
+    pygame.display.set_caption("Photobooth")
+
+    # Create a GUI manager
+    gui_manager = pygame_gui.UIManager((window_width, window_height))
+
+    # Create a Pygame GUI button for capturing images
+    capture_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((100, 100), (200, 100)),
+                                                  text='Capture',
+                                                  manager=gui_manager)
+
+    # Create a Pygame GUI button for printing the last captured image
+    print_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((100, 300), (200, 100)),
+                                                text='Print',
+                                                manager=gui_manager)
+
     # Display the webcam feed
     print(logo())
     video_stream_widget = VideoStreamWidget(width=1900, height=1080)
     capturing = False  # Flag to indicate whether to capture image or not
     countdown = 3  # Countdown duration
+    last_captured_image = None
 
     while True:
+        time_delta = clock.tick(60) / 1000.0
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                video_stream_widget.capture.release()
+                pygame.quit()
+                cv2.destroyAllWindows()
+                exit(1)
+
+            if event.type == pygame.USEREVENT:
+                if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == capture_button:
+                        capturing = True
+                    elif event.ui_element == print_button:
+                        if last_captured_image:
+                            try:
+                                os.startfile(last_captured_image, "print")
+                                print("Printing the captured image:", last_captured_image)
+                            except Exception as e:
+                                print("Failed to print the image:", str(e))
+
+            gui_manager.process_events(event)
+
         frame = video_stream_widget.frame
 
         # Mirror the image horizontally and rotate
@@ -244,33 +284,23 @@ def main():
                 image_path = capture_image(frame)
                 cv2.imshow("Captured Image", frame)
 
-                # Prompt user if they want to print the captured image
-                print_prompt = prompt_dialog_box("Print Confirmation", "Do you want to print the captured image?")
-                if print_prompt:
-                    try:
-                        os.startfile(image_path, "print")
-                        print("Printing the captured image:", image_path)
-                    except Exception as e:
-                        print("Failed to print the image:", str(e))
-                else:
-                    print("Image capture cancelled.")
-
                 # Go back to displaying the webcam feed
                 cv2.destroyWindow("Captured Image")
                 capturing = False
                 countdown = 3
+                last_captured_image = image_path
         else:
             cv2.imshow("Webcam", frame)
 
-        key = cv2.waitKey(1)
+        gui_manager.update(time_delta)
 
-        if key == 27:  # Check for Escape key press
-            break
+        # Draw the GUI elements on the Pygame surface
+        gui_manager.draw_ui(window_surface)
 
-        if key == ord("c"):  # Check for "c" key press to initiate countdown
-            capturing = True
+        pygame.display.update()
 
     video_stream_widget.capture.release()
+    pygame.quit()
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
