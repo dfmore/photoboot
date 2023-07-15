@@ -37,14 +37,21 @@ def capture_image(frame):
     file_path = os.path.join(FOLDER_PATH, filename)
     cv2.imwrite(file_path, frame)
 
-    card_frame = cv2.imread(CARD_FRAME_PATH)
+    card_frame = cv2.imread(CARD_FRAME_PATH, cv2.IMREAD_UNCHANGED)  # Load image with alpha channel
 
     if card_frame is not None:
         card_frame = cv2.resize(card_frame, (frame.shape[1], frame.shape[0]))
 
-        blended_image = cv2.addWeighted(frame, 1, card_frame, 0.8, 0)
+        overlay = frame.copy()
 
-        text = "Arthur & Charlie Birthday Party 2023"
+        # Extract the alpha channel
+        alpha = card_frame[:, :, 3] / 255.0
+
+        # Apply the alpha channel for transparency
+        for c in range(0, 3):
+            overlay[:, :, c] = alpha * card_frame[:, :, c] + (1 - alpha) * overlay[:, :, c]
+
+        text = "Arthur & Charlie's Birthday Party 2023"
         font = cv2.FONT_HERSHEY_SCRIPT_SIMPLEX
         font_scale = 3
         font_thickness = 5
@@ -54,23 +61,22 @@ def capture_image(frame):
         (text_width, text_height), _ = cv2.getTextSize(text, font, font_scale, font_thickness)
 
         text_x = int((frame.shape[1] - text_width) / 2)
-        text_y = int(frame.shape[0] / 2) + 450
+        text_y = int(frame.shape[0] / 2) + 475
 
         thickness = font_thickness + 2
-        cv2.putText(blended_image, text, (text_x - 3, text_y), font, font_scale, outline_color, thickness, cv2.LINE_AA)
-        cv2.putText(blended_image, text, (text_x + 3, text_y), font, font_scale, outline_color, thickness, cv2.LINE_AA)
-        cv2.putText(blended_image, text, (text_x, text_y - 3), font, font_scale, outline_color, thickness, cv2.LINE_AA)
-        cv2.putText(blended_image, text, (text_x, text_y + 3), font, font_scale, outline_color, thickness, cv2.LINE_AA)
+        cv2.putText(overlay, text, (text_x - 3, text_y), font, font_scale, outline_color, thickness, cv2.LINE_AA)
+        cv2.putText(overlay, text, (text_x + 3, text_y), font, font_scale, outline_color, thickness, cv2.LINE_AA)
+        cv2.putText(overlay, text, (text_x, text_y - 3), font, font_scale, outline_color, thickness, cv2.LINE_AA)
+        cv2.putText(overlay, text, (text_x, text_y + 3), font, font_scale, outline_color, thickness, cv2.LINE_AA)
 
-        cv2.putText(blended_image, text, (text_x, text_y), font, font_scale, text_color, font_thickness, cv2.LINE_AA)
+        cv2.putText(overlay, text, (text_x, text_y), font, font_scale, text_color, font_thickness, cv2.LINE_AA)
 
         final_file_path = os.path.join(FOLDER_PATH, f"final_{filename}")
-        cv2.imwrite(final_file_path, blended_image)
+        cv2.imwrite(final_file_path, overlay)
 
         return final_file_path
 
     return file_path
-
 
 def draw_timer(frame, seconds):
     height, width, _ = frame.shape

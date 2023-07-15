@@ -9,8 +9,7 @@ import pygame_gui
 
 
 # Constants
-WINDOW_WIDTH = 1300
-WINDOW_HEIGHT = 800
+WINDOW_SIZE = (1300, 800)
 WINDOW_IMAGE_SIZE = (800, 800)
 COUNTDOWN_DURATION = 3
 SOUND_FILE = 'camera-13695.wav'
@@ -42,7 +41,7 @@ def capture_image(frame):
     if card_frame is not None:
         card_frame = cv2.resize(card_frame, (frame.shape[1], frame.shape[0]))
 
-        blended_image = cv2.addWeighted(frame, 1, card_frame, 0.8, 0)
+        blended_image = cv2.addWeighted(frame, 1, card_frame, 0.5, 0)
 
         text = "Arthur & Charlie Birthday Party 2023"
         font = cv2.FONT_HERSHEY_SCRIPT_SIMPLEX
@@ -98,9 +97,9 @@ def draw_timer(frame, seconds):
 def main():
     pygame.init()
     clock = pygame.time.Clock()
-    window_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    window_surface = pygame.display.set_mode((WINDOW_SIZE[0], WINDOW_SIZE[1]))
     pygame.display.set_caption("Dan's PhotoBooth")
-    gui_manager = pygame_gui.UIManager((WINDOW_WIDTH, WINDOW_HEIGHT))
+    gui_manager = pygame_gui.UIManager((WINDOW_SIZE[0], WINDOW_SIZE[1]))
     capture_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((50, 50), (100, 50)),
                                                   text='Capture',
                                                   manager=gui_manager)
