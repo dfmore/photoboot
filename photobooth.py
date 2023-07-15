@@ -1,3 +1,4 @@
+import sys
 import cv2
 import os
 from datetime import datetime
@@ -44,10 +45,6 @@ class VideoStreamWidget(object):
         # Display frames in the main program
         cv2.imshow('frame', self.frame)
         key = cv2.waitKey(1)
-        if key == ord('q'):
-            self.capture.release()
-            cv2.destroyAllWindows()
-            exit(1)
 
 # Set the desired video capture dimensions
 width = 1920
@@ -236,6 +233,11 @@ def main():
                                                 text='Print',
                                                 manager=gui_manager)
 
+    # Create a Pygame GUI button for exiting the program
+    exit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((50, 250), (100, 50)),
+                                               text='Exit',
+                                               manager=gui_manager)
+
     # Create a Pygame GUI image for displaying the last captured image
     image_rect = pygame.Rect((300, 0), window_image_size)
     image_element = pygame_gui.elements.UIImage(image_rect, pygame.Surface(window_image_size), manager=gui_manager)
@@ -251,12 +253,6 @@ def main():
         time_delta = clock.tick(60) / 1000.0
 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                video_stream_widget.capture.release()
-                pygame.quit()
-                cv2.destroyAllWindows()
-                exit(1)
-
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == capture_button:
@@ -268,6 +264,11 @@ def main():
                                 print("Printing the captured image:", last_captured_image)
                             except Exception as e:
                                 print("Failed to print the image:", str(e))
+                    elif event.ui_element == exit_button:
+                        video_stream_widget.capture.release()
+                        pygame.quit()
+                        cv2.destroyAllWindows()
+                        sys.exit(0)
 
             gui_manager.process_events(event)
 
