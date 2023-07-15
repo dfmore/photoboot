@@ -82,7 +82,7 @@ def capture_image(frame):
         card_frame = cv2.resize(card_frame, (frame.shape[1], frame.shape[0]))
 
         # Overlay the card frame on the captured image
-        blended_image = cv2.addWeighted(frame, 1, card_frame, 0.5, 0)
+        blended_image = cv2.addWeighted(frame, 1, card_frame, 0.8, 0)
 
         # Add text overlay
         text = "Arthur & Charlie Birthday Party 2023"

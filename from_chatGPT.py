@@ -82,7 +82,7 @@ def capture_image(frame):
         card_frame = cv2.resize(card_frame, (frame.shape[1], frame.shape[0]))
 
         # Overlay the card frame on the captured image
-        blended_image = cv2.addWeighted(frame, 1, card_frame, 0.5, 0)
+        blended_image = cv2.addWeighted(frame, 1, card_frame, 0.8, 0)
 
         # Add text overlay
         text = "Arthur & Charlie Birthday Party 2023"
@@ -162,6 +162,11 @@ def capture_image(frame):
 
     return file_path
 
+# Function to get user input from console
+def get_user_input(prompt):
+    response = input(prompt)
+    return response.lower() == 'y'
+
 # Function to draw the countdown timer on the frame
 def draw_timer(frame, seconds):
     # Get the dimensions of the frame
@@ -200,19 +205,10 @@ def draw_timer(frame, seconds):
 
     return frame
 
-# Function to display a dialog box and ask for user input
-def prompt_dialog_box(title, message):
-    response = ctypes.windll.user32.MessageBoxW(0, message, title, 1)
-    return response == 1  # Return True if "Yes" button is clicked
-
 # Main script
 def main():
     # Display the webcam feed
     video_stream_widget = VideoStreamWidget(width=1900, height=1080)
-    
-    # Wait for a moment to ensure the webcam feed is started
-    time.sleep(2)
-
     capturing = False  # Flag to indicate whether to capture image or not
     countdown = 3  # Countdown duration
 
@@ -232,16 +228,19 @@ def main():
             else:
                 # Play the sound when the countdown reaches 0
                 sound.play()
-
+y
                 # Capture the image after the countdown reaches 0
                 image_path = capture_image(frame)
                 cv2.imshow("Captured Image", frame)
 
                 # Prompt user if they want to print the captured image
-                print_prompt = prompt_dialog_box("Print Confirmation", "Do you want to print the captured image?")
+                print_prompt = get_user_input("Do you want to print the captured image? (y/n) ")
                 if print_prompt:
                     try:
-                        os.startfile(image_path, "print")
+                        if sys.platform == 'win32':
+                            subprocess.run(['mspaint', '/p', image_path], check=True)
+                        else:
+                            subprocess.run(['lp', image_path], check=True)
                         print("Printing the captured image:", image_path)
                     except Exception as e:
                         print("Failed to print the image:", str(e))
